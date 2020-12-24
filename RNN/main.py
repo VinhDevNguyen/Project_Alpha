@@ -1,30 +1,12 @@
-import numpy as np 
-import tensorflow as tf
-from tensorflow import keras 
-from tensorflow.keras import layers 
-
-
-def Create_RNN_Model(
-    input_dim, # input dimension  
-    output_dim, # output dimension 
-    num_lstm_unit, # interal LSTM unit
-): 
-    model = keras.Sequential()     
-    model.add(layers.Embedding(input_dim=input_dim, output_dim=output_dim))
-
-    # Add a LSTM layers with N unit  
-    model.add(layers.LSTM(num_lstm_unit))
-
-
-    # Add dense layer 
-    # model.add(layers.Dense(10))
-
-    # Print out summary of model architecture
-    model.summary()
-
-    return model
+import pandas as pd 
 
 
 
 
-
+# def evaluate_accuracy_at_4(submission,ground_truth):
+#     '''checks if the true city is within the four recommended cities'''
+#     data_to_eval = submission.join(ground_truth,on='utrip_id')
+#     hits = data_to_eval.apply(
+#         lambda row: row['city_id'] in (row[['city_id_1', 'city_id_2', 'city_id_3', 'city_id_4']].values),
+#             axis = 1)
+#     return hits.mean()
