@@ -1,0 +1,1677 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "RNN_baseline.ipynb",
+      "provenance": [],
+      "toc_visible": true,
+      "authorship_tag": "ABX9TyOR2UrBP3sfWIUxlruP0Qwq",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/VinhDevNguyen/Project_Alpha/blob/RNN_baseline/Test%20embedding%20layer%20with%20sequence%20generator\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Kx8s3aDhnIi4"
+      },
+      "source": [
+        "# Mount Google Drive\r\n",
+        "Data for ``Booking Challenge`` stores in ``UIT TSP``folder"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "3DAtPRJUnHqj",
+        "outputId": "af6927a6-da90-4594-df29-49bd699b479d"
+      },
+      "source": [
+        "from google.colab import drive\r\n",
+        "drive.mount('/content/drive')"
+      ],
+      "execution_count": 1,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Mounted at /content/drive\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "y1dpK2JuomBa"
+      },
+      "source": [
+        "# Data path"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "3ZNxT-ccEgnt"
+      },
+      "source": [
+        "import pandas as pd "
+      ],
+      "execution_count": 2,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "wQYdX28EpKBX"
+      },
+      "source": [
+        "folder_path = './drive/MyDrive/UIT-TSP/Booking.com Data Challenge'\r\n",
+        "data_path = \"/content/drive/MyDrive/UIT-TSP/Booking.com Data Challenge/booking_train_set.csv\""
+      ],
+      "execution_count": 3,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "4z__LORvEagj",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 317
+        },
+        "outputId": "0766260b-aacb-4b80-f09f-421e5d867d17"
+      },
+      "source": [
+        "df = pd.read_csv(data_path)\r\n",
+        "df.head()"
+      ],
+      "execution_count": 4,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/html": [
+              "<div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>Unnamed: 0</th>\n",
+              "      <th>user_id</th>\n",
+              "      <th>checkin</th>\n",
+              "      <th>checkout</th>\n",
+              "      <th>city_id</th>\n",
+              "      <th>device_class</th>\n",
+              "      <th>affiliate_id</th>\n",
+              "      <th>booker_country</th>\n",
+              "      <th>hotel_country</th>\n",
+              "      <th>utrip_id</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>0</td>\n",
+              "      <td>1006220</td>\n",
+              "      <td>2016-04-09</td>\n",
+              "      <td>2016-04-11</td>\n",
+              "      <td>31114</td>\n",
+              "      <td>desktop</td>\n",
+              "      <td>384</td>\n",
+              "      <td>Gondal</td>\n",
+              "      <td>Gondal</td>\n",
+              "      <td>1006220_1</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>1</td>\n",
+              "      <td>1006220</td>\n",
+              "      <td>2016-04-11</td>\n",
+              "      <td>2016-04-12</td>\n",
+              "      <td>39641</td>\n",
+              "      <td>desktop</td>\n",
+              "      <td>384</td>\n",
+              "      <td>Gondal</td>\n",
+              "      <td>Gondal</td>\n",
+              "      <td>1006220_1</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>2</td>\n",
+              "      <td>1006220</td>\n",
+              "      <td>2016-04-12</td>\n",
+              "      <td>2016-04-16</td>\n",
+              "      <td>20232</td>\n",
+              "      <td>desktop</td>\n",
+              "      <td>384</td>\n",
+              "      <td>Gondal</td>\n",
+              "      <td>Glubbdubdrib</td>\n",
+              "      <td>1006220_1</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>3</th>\n",
+              "      <td>3</td>\n",
+              "      <td>1006220</td>\n",
+              "      <td>2016-04-16</td>\n",
+              "      <td>2016-04-17</td>\n",
+              "      <td>24144</td>\n",
+              "      <td>desktop</td>\n",
+              "      <td>384</td>\n",
+              "      <td>Gondal</td>\n",
+              "      <td>Gondal</td>\n",
+              "      <td>1006220_1</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>4</th>\n",
+              "      <td>4</td>\n",
+              "      <td>1010293</td>\n",
+              "      <td>2016-07-09</td>\n",
+              "      <td>2016-07-10</td>\n",
+              "      <td>5325</td>\n",
+              "      <td>mobile</td>\n",
+              "      <td>359</td>\n",
+              "      <td>The Devilfire Empire</td>\n",
+              "      <td>Cobra Island</td>\n",
+              "      <td>1010293_1</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div>"
+            ],
+            "text/plain": [
+              "   Unnamed: 0  user_id  ... hotel_country   utrip_id\n",
+              "0           0  1006220  ...        Gondal  1006220_1\n",
+              "1           1  1006220  ...        Gondal  1006220_1\n",
+              "2           2  1006220  ...  Glubbdubdrib  1006220_1\n",
+              "3           3  1006220  ...        Gondal  1006220_1\n",
+              "4           4  1010293  ...  Cobra Island  1010293_1\n",
+              "\n",
+              "[5 rows x 10 columns]"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 4
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "5Xg633w0mF5l"
+      },
+      "source": [
+        "# Import libraries"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "-Zgx_TCvi7I4"
+      },
+      "source": [
+        "import math\r\n",
+        "import torch\r\n",
+        "import torch.nn as nn\r\n",
+        "import torch.nn.functional as F"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Ee9SYN0fmVOe"
+      },
+      "source": [
+        "# RNN with PyTorch "
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "rth6exvGmS-Y"
+      },
+      "source": [
+        "class RNNModel(nn.Module):\r\n",
+        "    \"\"\"Container module with an encoder, a recurrent module, and a decoder.\"\"\"\r\n",
+        "\r\n",
+        "    def __init__(self, \r\n",
+        "                 vocab_size, \r\n",
+        "                 emb_size=500, \r\n",
+        "                 rnn_dim=500, \r\n",
+        "                 n_layers=2, \r\n",
+        "                 dropout=0.3, \r\n",
+        "                 rnn_dropout=0.3, \r\n",
+        "                 tie_weights=False):\r\n",
+        "        super(RNNModel, self).__init__()\r\n",
+        "        self.drop = nn.Dropout(dropout) \r\n",
+        "        self.embedding = nn.Embedding(vocab_size,emb_dim) \r\n",
+        "        self.rnn = nn.RNN(input_size=emb_dim,\r\n",
+        "                          hidden_size=rnn_dim, \r\n",
+        "                          num_layers=n_layers, \r\n",
+        "                          dropout=rnn_dropout) \r\n",
+        "        self.dense = nn.Linear(rnn_dim,vocab_size)\r\n",
+        "\r\n",
+        "        # Optionally tie weights as in:\r\n",
+        "        # \"Using the Output Embedding to Improve Language Models\" (Press & Wolf 2016)\r\n",
+        "        # https://arxiv.org/abs/1608.05859\r\n",
+        "        # and\r\n",
+        "        # \"Tying Word Vectors and Word Classifiers: A Loss Framework for Language Modeling\" (Inan et al. 2016)\r\n",
+        "        # https://arxiv.org/abs/1611.01462\r\n",
+        "        if tie_weights: # theta_d = theta_y\r\n",
+        "          self.dense.weight = self.embedding.weight\r\n",
+        "\r\n",
+        "        self.vocab_size = vocab_size \r\n",
+        "        self.emb_size = emb_size \r\n",
+        "        self.rnn_dim = rnn_dim \r\n",
+        "        self.n_layers = n_layers \r\n",
+        "        self.dropout = dropout \r\n",
+        "        self.rnn_dropout = rnn_dropout \r\n",
+        "        self.tie_weights = tie_weights \r\n",
+        "\r\n",
+        "\r\n",
+        "    # def init_weights(self):\r\n",
+        "    #     initrange = 0.1\r\n",
+        "    #     nn.init.uniform_(self.encoder.weight, -initrange, initrange)\r\n",
+        "    #     nn.init.zeros_(self.decoder.weight)\r\n",
+        "    #     nn.init.uniform_(self.decoder.weight, -initrange, initrange)\r\n",
+        "\r\n",
+        "    # Not clear here \r\n",
+        "    def forward(self, input, h0=None): \r\n",
+        "      out, hidden = self.rnn(\r\n",
+        "                      self.drop(\r\n",
+        "                          self.embedding(input)),\r\n",
+        "                      h0)\r\n",
+        "      out = self.dense(self.drop(\r\n",
+        "                            out.view(\r\n",
+        "                                out.size(0)*out.size(1),\r\n",
+        "                                out.size(2)))\r\n",
+        "                      )\r\n",
+        "      return out, hidden \r\n",
+        "\r\n",
+        "    # def forward(self, input, hidden):\r\n",
+        "    #     emb = self.drop(self.encoder(input))\r\n",
+        "    #     output, hidden = self.rnn(emb, hidden)\r\n",
+        "    #     output = self.drop(output)\r\n",
+        "    #     decoded = self.decoder(output)\r\n",
+        "    #     decoded = decoded.view(-1, self.ntoken)\r\n",
+        "    #     return F.log_softmax(decoded, dim=1), hidden\r\n",
+        "\r\n",
+        "    # def init_hidden(self, bsz):\r\n",
+        "    #     weight = next(self.parameters())\r\n",
+        "    #     if self.rnn_type == 'LSTM':\r\n",
+        "    #         return (weight.new_zeros(self.nlayers, bsz, self.nhid),\r\n",
+        "    #                 weight.new_zeros(self.nlayers, bsz, self.nhid))\r\n",
+        "    #     else:\r\n",
+        "    #         return weight.new_zeros(self.nlayers, bsz, self.nhid)\r\n",
+        "\r\n",
+        "    # def save_model(self): \r\n",
+        "\r\n",
+        "    # def load_model(self): \r\n",
+        "\r\n"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Y3OZVL5__S3E"
+      },
+      "source": [
+        "# RNN with Tensorflow "
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "dJqPRVJl_Zxi"
+      },
+      "source": [
+        "## Import libraries "
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "u5Q4_aSfpb10"
+      },
+      "source": [
+        "import numpy as np\r\n",
+        "import tensorflow as tf\r\n",
+        "from tensorflow import keras\r\n",
+        "from tensorflow.keras import layers"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "U7cYSPXiAbc5"
+      },
+      "source": [
+        "## create RNN model "
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "GfAIeO1c_cgD"
+      },
+      "source": [
+        "def create_RNN_model(\r\n",
+        "          vocab_size, \r\n",
+        "          emb_size=500, \r\n",
+        "          rnn_dim=500, \r\n",
+        "          n_layers=2, \r\n",
+        "          dropout=0.3, \r\n",
+        "          rnn_dropout=0.3, \r\n",
+        "          tie_weights=False):\r\n",
+        "\r\n",
+        "  model = keras.Sequential()\r\n",
+        "  model.add(layers.Embedding(input_dim=emb_size, output_dim=4 ))\r\n",
+        "\r\n",
+        "  # The output of GRU will be a 3D tensor of shape (batch_size, timesteps, 256)\r\n",
+        "  model.add(layers.GRU(256, return_sequences=True))\r\n",
+        "\r\n",
+        "  # The output of SimpleRNN will be a 2D tensor of shape (batch_size, 128)\r\n",
+        "  model.add(layers.SimpleRNN(128))\r\n",
+        "\r\n",
+        "  model.add(layers.Dense(10))\r\n",
+        "\r\n",
+        "  model.summary()\r\n",
+        "\r\n",
+        "  return model "
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "c0YXUAhn_jYE"
+      },
+      "source": [
+        "model = create_RNN_model()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "jMBgipi3_WEB"
+      },
+      "source": [
+        "## RNN model class "
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "fInLvhds36aJ"
+      },
+      "source": [
+        "class RNNModel:\r\n",
+        "    def __init__(self, \r\n",
+        "                 vocab_size, \r\n",
+        "                 emb_size=500, \r\n",
+        "                 rnn_dim=500, \r\n",
+        "                 n_layers=2, \r\n",
+        "                 dropout=0.3, \r\n",
+        "                 rnn_dropout=0.3): \r\n",
+        "        self.drop = nn.Dropout(dropout) \r\n",
+        "        self.embedding = nn.Embedding(vocab_size,emb_dim) \r\n",
+        "        self.rnn = nn.RNN(input_size=emb_dim,\r\n",
+        "                          hidden_size=rnn_dim, \r\n",
+        "                          num_layers=n_layers, \r\n",
+        "                          dropout=rnn_dropout) \r\n",
+        "\r\n",
+        "        self.dense = nn.Linear(rnn_dim,vocab_size)\r\n",
+        "\r\n",
+        "\r\n",
+        "        self.vocab_size = vocab_size \r\n",
+        "        self.emb_size = emb_size \r\n",
+        "        self.rnn_dim = rnn_dim \r\n",
+        "        self.n_layers = n_layers \r\n",
+        "        self.dropout = dropout \r\n",
+        "        self.rnn_dropout = rnn_dropout \r\n",
+        "        self.tie_weights = tie_weights \r\n",
+        "\r\n",
+        "        self.model = create_RNN_model(vocab_size, emb_size, rnn_size, n_layers = n_layers, \r\n",
+        "                                      dropout = dropout, rnn_dropout=rnn_dropout,\r\n",
+        "                                      tie_weights=tie_weights)\r\n",
+        "\r\n",
+        "    # Not clear here \r\n",
+        "    def forward(self, input, h0=None): \r\n",
+        "      out, hidden = self.rnn(\r\n",
+        "                      self.drop(\r\n",
+        "                          self.embedding(input)),\r\n",
+        "                      h0)\r\n",
+        "      out = self.dense(self.drop(\r\n",
+        "                            out.view(\r\n",
+        "                                out.size(0)*out.size(1),\r\n",
+        "                                out.size(2)))\r\n",
+        "                      )\r\n",
+        "      return out, hidden \r\n",
+        "\r\n",
+        "    # def train(self): \r\n",
+        "    # def save_model(self):\r\n",
+        "    # def load_model(self):"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "1mEShcDu9rwY"
+      },
+      "source": [
+        "# ## Testing \r\n",
+        "# paragraph1 = np.random.random((20, 10, 50)).astype(np.float32)\r\n",
+        "# paragraph2 = np.random.random((20, 10, 50)).astype(np.float32)\r\n",
+        "# paragraph3 = np.random.random((20, 10, 50)).astype(np.float32)\r\n",
+        "\r\n",
+        "# lstm_layer = layers.LSTM(64, stateful=True)\r\n",
+        "# output = lstm_layer(paragraph1)\r\n",
+        "# output = lstm_layer(paragraph2)\r\n",
+        "\r\n",
+        "# existing_state = lstm_layer.states\r\n",
+        "\r\n",
+        "# new_lstm_layer = layers.LSTM(64)\r\n",
+        "# new_output = new_lstm_layer(paragraph3, initial_state=existing_state)\r\n"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "6tFMx2s-95h4",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "a0a2f790-ee67-40b3-ab31-4e169dd310e2"
+      },
+      "source": [
+        "# paragraph1 "
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "array([[[0.4384477 , 0.70959634, 0.15308669, ..., 0.28581852,\n",
+              "         0.22975205, 0.3308152 ],\n",
+              "        [0.9046204 , 0.05282678, 0.34636778, ..., 0.104307  ,\n",
+              "         0.95794   , 0.85673577],\n",
+              "        [0.17676865, 0.34466982, 0.46606266, ..., 0.89375216,\n",
+              "         0.90824926, 0.032717  ],\n",
+              "        ...,\n",
+              "        [0.07953037, 0.02336469, 0.9040275 , ..., 0.37990856,\n",
+              "         0.5449542 , 0.11931679],\n",
+              "        [0.13505265, 0.06546313, 0.91656995, ..., 0.96330225,\n",
+              "         0.35127148, 0.30735272],\n",
+              "        [0.43864247, 0.09331185, 0.0787064 , ..., 0.68661904,\n",
+              "         0.21598631, 0.21987194]],\n",
+              "\n",
+              "       [[0.5607646 , 0.21337695, 0.24137759, ..., 0.7216155 ,\n",
+              "         0.5272271 , 0.02199812],\n",
+              "        [0.859154  , 0.55872273, 0.8249309 , ..., 0.47798792,\n",
+              "         0.10819671, 0.81250495],\n",
+              "        [0.01605468, 0.9332755 , 0.75010777, ..., 0.02574055,\n",
+              "         0.3090186 , 0.17313221],\n",
+              "        ...,\n",
+              "        [0.4615367 , 0.5239395 , 0.3345207 , ..., 0.31028378,\n",
+              "         0.71332794, 0.7954804 ],\n",
+              "        [0.69030744, 0.00414923, 0.64131063, ..., 0.80923724,\n",
+              "         0.27126586, 0.28260955],\n",
+              "        [0.9700208 , 0.09314438, 0.2891947 , ..., 0.7265267 ,\n",
+              "         0.05552297, 0.80999446]],\n",
+              "\n",
+              "       [[0.55349773, 0.55608046, 0.6532228 , ..., 0.26613623,\n",
+              "         0.7346687 , 0.8241635 ],\n",
+              "        [0.76386535, 0.5012166 , 0.7571798 , ..., 0.02644019,\n",
+              "         0.7859128 , 0.96296227],\n",
+              "        [0.27788776, 0.90432376, 0.7006134 , ..., 0.6916032 ,\n",
+              "         0.4892773 , 0.7297027 ],\n",
+              "        ...,\n",
+              "        [0.2639081 , 0.08462964, 0.4274762 , ..., 0.1532014 ,\n",
+              "         0.41439676, 0.8959537 ],\n",
+              "        [0.71709794, 0.55632573, 0.10872711, ..., 0.05398476,\n",
+              "         0.3508628 , 0.24136817],\n",
+              "        [0.6666846 , 0.36440343, 0.7210429 , ..., 0.84162337,\n",
+              "         0.22479475, 0.68267566]],\n",
+              "\n",
+              "       ...,\n",
+              "\n",
+              "       [[0.58290297, 0.01104978, 0.6161393 , ..., 0.16377287,\n",
+              "         0.44222137, 0.8503619 ],\n",
+              "        [0.26560766, 0.00346799, 0.66688883, ..., 0.9459356 ,\n",
+              "         0.5727698 , 0.8886736 ],\n",
+              "        [0.526636  , 0.6057371 , 0.23933837, ..., 0.32031795,\n",
+              "         0.5378725 , 0.76860344],\n",
+              "        ...,\n",
+              "        [0.82811105, 0.9331024 , 0.66108364, ..., 0.5572996 ,\n",
+              "         0.88154   , 0.6756931 ],\n",
+              "        [0.81059194, 0.04841247, 0.3076325 , ..., 0.81151026,\n",
+              "         0.29187292, 0.83508235],\n",
+              "        [0.36365023, 0.9010135 , 0.11735665, ..., 0.2400887 ,\n",
+              "         0.9414961 , 0.39943326]],\n",
+              "\n",
+              "       [[0.83466893, 0.1847028 , 0.00329075, ..., 0.81031096,\n",
+              "         0.33922243, 0.5856755 ],\n",
+              "        [0.3320365 , 0.45945257, 0.41548407, ..., 0.982118  ,\n",
+              "         0.6817168 , 0.16656232],\n",
+              "        [0.7029687 , 0.26669392, 0.70029014, ..., 0.5132876 ,\n",
+              "         0.9931527 , 0.5020733 ],\n",
+              "        ...,\n",
+              "        [0.3489829 , 0.5959882 , 0.4975898 , ..., 0.1653224 ,\n",
+              "         0.9521973 , 0.01977547],\n",
+              "        [0.50557965, 0.9298632 , 0.00339681, ..., 0.47428733,\n",
+              "         0.6818275 , 0.7145517 ],\n",
+              "        [0.7778242 , 0.05746478, 0.83536386, ..., 0.40945137,\n",
+              "         0.8653515 , 0.7685684 ]],\n",
+              "\n",
+              "       [[0.49018666, 0.02631567, 0.41822246, ..., 0.33115557,\n",
+              "         0.79958516, 0.8605088 ],\n",
+              "        [0.6555573 , 0.05526401, 0.14900555, ..., 0.263111  ,\n",
+              "         0.9514291 , 0.46111503],\n",
+              "        [0.84376544, 0.4024486 , 0.5931128 , ..., 0.65488505,\n",
+              "         0.45842838, 0.68300235],\n",
+              "        ...,\n",
+              "        [0.7334061 , 0.57921857, 0.08395816, ..., 0.03707851,\n",
+              "         0.3458865 , 0.17949723],\n",
+              "        [0.04974084, 0.8059455 , 0.4086997 , ..., 0.37965295,\n",
+              "         0.48380828, 0.63552356],\n",
+              "        [0.96804607, 0.4552574 , 0.09933035, ..., 0.16562337,\n",
+              "         0.672737  , 0.44912988]]], dtype=float32)"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 5
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "0IP2RFXU_hQH",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "4c01f721-488f-4061-8723-584eb2216290"
+      },
+      "source": [
+        "output\r\n"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "<tf.Tensor: shape=(20, 64), dtype=float32, numpy=\n",
+              "array([[-0.26159257,  0.3828493 , -0.06094625, ...,  0.41688082,\n",
+              "         0.06902932,  0.17313975],\n",
+              "       [-0.22398742,  0.3048276 ,  0.01105477, ...,  0.3025591 ,\n",
+              "        -0.09937311,  0.16212305],\n",
+              "       [-0.1873369 ,  0.28067118, -0.0903695 , ...,  0.47735262,\n",
+              "         0.09688166,  0.10506968],\n",
+              "       ...,\n",
+              "       [-0.2334649 ,  0.42825425, -0.08432736, ...,  0.33124694,\n",
+              "         0.13678132,  0.16629355],\n",
+              "       [-0.24908844,  0.33447886, -0.10338344, ...,  0.37441865,\n",
+              "         0.12842214,  0.04302474],\n",
+              "       [-0.12451277,  0.36226118, -0.15007631, ...,  0.34746057,\n",
+              "         0.12647597,  0.1358475 ]], dtype=float32)>"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 3
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "7ND6x_1q917z",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "6e87c999-5ae6-43e7-f794-985b0434a4ab"
+      },
+      "source": [
+        "# new_output"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "<tf.Tensor: shape=(20, 64), dtype=float32, numpy=\n",
+              "array([[ 0.07265107,  0.12564135,  0.2950572 , ..., -0.00305309,\n",
+              "         0.30196252, -0.19266294],\n",
+              "       [ 0.10832786, -0.02208175,  0.19994555, ..., -0.15402594,\n",
+              "         0.15071553, -0.12331202],\n",
+              "       [ 0.04492785, -0.01332777,  0.16630736, ..., -0.03083682,\n",
+              "         0.26744378, -0.19593215],\n",
+              "       ...,\n",
+              "       [ 0.06476085, -0.00676946,  0.22334988, ..., -0.06385501,\n",
+              "         0.20579292, -0.1357603 ],\n",
+              "       [ 0.02144044,  0.03727771,  0.2299651 , ..., -0.06008133,\n",
+              "         0.2050588 , -0.12643524],\n",
+              "       [-0.01233856, -0.00042944,  0.24162439, ..., -0.13264933,\n",
+              "         0.28603524, -0.0941027 ]], dtype=float32)>"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 4
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "6lKfqrp--Q8j",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "869f91d7-36db-4d86-96cb-32bfff328c9a"
+      },
+      "source": [
+        "# # Test embedding \r\n",
+        "# encoder_vocab = 1000\r\n",
+        "# decoder_vocab = 2000\r\n",
+        "\r\n",
+        "# encoder_input = layers.Input(shape=(None,))\r\n",
+        "# encoder_embedded = layers.Embedding(input_dim=encoder_vocab, output_dim=64)(\r\n",
+        "#     encoder_input\r\n",
+        "# )\r\n",
+        "\r\n",
+        "# # Return states in addition to output\r\n",
+        "# output, state_h, state_c = layers.LSTM(64, return_state=True, name=\"encoder\")(\r\n",
+        "#     encoder_embedded\r\n",
+        "# )\r\n",
+        "# encoder_state = [state_h, state_c]\r\n",
+        "\r\n",
+        "# decoder_input = layers.Input(shape=(None,))\r\n",
+        "# decoder_embedded = layers.Embedding(input_dim=decoder_vocab, output_dim=64)(\r\n",
+        "#     decoder_input\r\n",
+        "# )\r\n",
+        "\r\n",
+        "# # Pass the 2 states to a new LSTM layer, as initial state\r\n",
+        "# decoder_output = layers.LSTM(64, name=\"decoder\")(\r\n",
+        "#     decoder_embedded, initial_state=encoder_state\r\n",
+        "# )\r\n",
+        "# output = layers.Dense(10)(decoder_output)\r\n",
+        "\r\n",
+        "# model = keras.Model([encoder_input, decoder_input], output)\r\n",
+        "# model.summary()"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Model: \"model\"\n",
+            "__________________________________________________________________________________________________\n",
+            "Layer (type)                    Output Shape         Param #     Connected to                     \n",
+            "==================================================================================================\n",
+            "input_1 (InputLayer)            [(None, None)]       0                                            \n",
+            "__________________________________________________________________________________________________\n",
+            "input_2 (InputLayer)            [(None, None)]       0                                            \n",
+            "__________________________________________________________________________________________________\n",
+            "embedding (Embedding)           (None, None, 64)     64000       input_1[0][0]                    \n",
+            "__________________________________________________________________________________________________\n",
+            "embedding_1 (Embedding)         (None, None, 64)     128000      input_2[0][0]                    \n",
+            "__________________________________________________________________________________________________\n",
+            "encoder (LSTM)                  [(None, 64), (None,  33024       embedding[0][0]                  \n",
+            "__________________________________________________________________________________________________\n",
+            "decoder (LSTM)                  (None, 64)           33024       embedding_1[0][0]                \n",
+            "                                                                 encoder[0][1]                    \n",
+            "                                                                 encoder[0][2]                    \n",
+            "__________________________________________________________________________________________________\n",
+            "dense (Dense)                   (None, 10)           650         decoder[0][0]                    \n",
+            "==================================================================================================\n",
+            "Total params: 258,698\n",
+            "Trainable params: 258,698\n",
+            "Non-trainable params: 0\n",
+            "__________________________________________________________________________________________________\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "-hStnNjZ5N7n"
+      },
+      "source": [
+        ""
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "NOV-icRADe1p"
+      },
+      "source": [
+        "# Test Embedding "
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "BpIeZQaiFONZ",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 191
+        },
+        "outputId": "dfdc78a2-5338-4494-b5e5-29aa4380c7a2"
+      },
+      "source": [
+        "df.head()"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/html": [
+              "<div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>Unnamed: 0</th>\n",
+              "      <th>user_id</th>\n",
+              "      <th>checkin</th>\n",
+              "      <th>checkout</th>\n",
+              "      <th>city_id</th>\n",
+              "      <th>device_class</th>\n",
+              "      <th>affiliate_id</th>\n",
+              "      <th>booker_country</th>\n",
+              "      <th>hotel_country</th>\n",
+              "      <th>utrip_id</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>0</td>\n",
+              "      <td>1006220</td>\n",
+              "      <td>2016-04-09</td>\n",
+              "      <td>2016-04-11</td>\n",
+              "      <td>31114</td>\n",
+              "      <td>desktop</td>\n",
+              "      <td>384</td>\n",
+              "      <td>Gondal</td>\n",
+              "      <td>Gondal</td>\n",
+              "      <td>1006220_1</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>1</td>\n",
+              "      <td>1006220</td>\n",
+              "      <td>2016-04-11</td>\n",
+              "      <td>2016-04-12</td>\n",
+              "      <td>39641</td>\n",
+              "      <td>desktop</td>\n",
+              "      <td>384</td>\n",
+              "      <td>Gondal</td>\n",
+              "      <td>Gondal</td>\n",
+              "      <td>1006220_1</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>2</td>\n",
+              "      <td>1006220</td>\n",
+              "      <td>2016-04-12</td>\n",
+              "      <td>2016-04-16</td>\n",
+              "      <td>20232</td>\n",
+              "      <td>desktop</td>\n",
+              "      <td>384</td>\n",
+              "      <td>Gondal</td>\n",
+              "      <td>Glubbdubdrib</td>\n",
+              "      <td>1006220_1</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>3</th>\n",
+              "      <td>3</td>\n",
+              "      <td>1006220</td>\n",
+              "      <td>2016-04-16</td>\n",
+              "      <td>2016-04-17</td>\n",
+              "      <td>24144</td>\n",
+              "      <td>desktop</td>\n",
+              "      <td>384</td>\n",
+              "      <td>Gondal</td>\n",
+              "      <td>Gondal</td>\n",
+              "      <td>1006220_1</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>4</th>\n",
+              "      <td>4</td>\n",
+              "      <td>1010293</td>\n",
+              "      <td>2016-07-09</td>\n",
+              "      <td>2016-07-10</td>\n",
+              "      <td>5325</td>\n",
+              "      <td>mobile</td>\n",
+              "      <td>359</td>\n",
+              "      <td>The Devilfire Empire</td>\n",
+              "      <td>Cobra Island</td>\n",
+              "      <td>1010293_1</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div>"
+            ],
+            "text/plain": [
+              "   Unnamed: 0  user_id  ... hotel_country   utrip_id\n",
+              "0           0  1006220  ...        Gondal  1006220_1\n",
+              "1           1  1006220  ...        Gondal  1006220_1\n",
+              "2           2  1006220  ...  Glubbdubdrib  1006220_1\n",
+              "3           3  1006220  ...        Gondal  1006220_1\n",
+              "4           4  1010293  ...  Cobra Island  1010293_1\n",
+              "\n",
+              "[5 rows x 10 columns]"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 39
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "vYHaVU-pFJ0x",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "e7fa5034-fb0b-401c-88dd-1656b1241a2d"
+      },
+      "source": [
+        "doc_utrip = df['utrip_id']\r\n",
+        "print(len(doc_utrip))\r\n",
+        "doc_utrip.head()"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "1166835\n"
+          ],
+          "name": "stdout"
+        },
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "0    1006220_1\n",
+              "1    1006220_1\n",
+              "2    1006220_1\n",
+              "3    1006220_1\n",
+              "4    1010293_1\n",
+              "Name: utrip_id, dtype: object"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 40
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "VwglaU-lHAwc",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "2ea54227-9bf6-4c9e-efdd-34aff87e1cab"
+      },
+      "source": [
+        "# Get label\r\n",
+        "utrip_label = df['utrip_id'].unique()\r\n",
+        "print(len(utrip_label))\r\n",
+        "utrip_label"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "217686\n"
+          ],
+          "name": "stdout"
+        },
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "array(['1006220_1', '1010293_1', '1012680_1', ..., '987787_1', '999261_1',\n",
+              "       '999755_1'], dtype=object)"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 41
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Se-uLU-cGBMl"
+      },
+      "source": [
+        "from numpy import array\r\n",
+        "from keras.preprocessing.text import one_hot\r\n",
+        "from keras.preprocessing.sequence import pad_sequences\r\n",
+        "from keras.models import Sequential\r\n",
+        "from keras.layers import Dense\r\n",
+        "from keras.layers import Flatten\r\n",
+        "from keras.layers.embeddings import Embedding"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "FrdufvACDgI6",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "aae39816-234b-4583-903a-516d3e0c54a4"
+      },
+      "source": [
+        "vocab_size = 217687\r\n",
+        "max_length = len(doc_utrip) \r\n",
+        "print('vocab size ', vocab_size)\r\n",
+        "print('max length ', max_length)"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "vocab size  217687\n",
+            "max length  1166835\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "0FaASHXXGGON",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "cbec9157-cf8a-4c41-eac7-3c3a022feb12"
+      },
+      "source": [
+        "from keras.models import Sequential\r\n",
+        "from keras.layers import LSTM, Dense, Dropout, Masking, Embedding\r\n",
+        "\r\n",
+        "model = Sequential()\r\n",
+        "\r\n",
+        "# Embedding layer\r\n",
+        "model.add(\r\n",
+        "   Embedding(1166835,48) \r\n",
+        ")\r\n",
+        "# model.add(\r\n",
+        "#     Embedding(input_dim=num_words,\r\n",
+        "#               input_length = training_length,\r\n",
+        "#               output_dim=100,\r\n",
+        "#               weights=[embedding_matrix],\r\n",
+        "#               trainable=False,\r\n",
+        "#               mask_zero=True))\r\n",
+        "\r\n",
+        "# # Masking layer for pre-trained embeddings\r\n",
+        "# model.add(Masking(mask_value=0.0))\r\n",
+        "\r\n",
+        "# Recurrent layer\r\n",
+        "model.add(LSTM(64, return_sequences=False, \r\n",
+        "               dropout=0.1, recurrent_dropout=0.1))\r\n",
+        "\r\n",
+        "# Fully connected layer\r\n",
+        "model.add(Dense(64, activation='relu'))\r\n",
+        "\r\n",
+        "# Dropout for regularization\r\n",
+        "model.add(Dropout(0.5))\r\n",
+        "\r\n",
+        "# Output layer\r\n",
+        "model.add(Dense(4, activation='softmax'))\r\n",
+        "\r\n",
+        "# Compile the model\r\n",
+        "model.compile(\r\n",
+        "    optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])\r\n",
+        "  \r\n",
+        "model.summary()"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Model: \"sequential_10\"\n",
+            "_________________________________________________________________\n",
+            "Layer (type)                 Output Shape              Param #   \n",
+            "=================================================================\n",
+            "embedding_9 (Embedding)      (None, None, 48)          56008080  \n",
+            "_________________________________________________________________\n",
+            "lstm_9 (LSTM)                (None, 64)                28928     \n",
+            "_________________________________________________________________\n",
+            "dense_14 (Dense)             (None, 64)                4160      \n",
+            "_________________________________________________________________\n",
+            "dropout_7 (Dropout)          (None, 64)                0         \n",
+            "_________________________________________________________________\n",
+            "dense_15 (Dense)             (None, 4)                 260       \n",
+            "=================================================================\n",
+            "Total params: 56,041,428\n",
+            "Trainable params: 56,041,428\n",
+            "Non-trainable params: 0\n",
+            "_________________________________________________________________\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "yuGmx7wqRBj9"
+      },
+      "source": [
+        "## Generate Sequence"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Ne0mBmM9RDUF",
+        "outputId": "fc5e2d56-5d47-4d87-92ca-a6f713363315",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        }
+      },
+      "source": [
+        "# Create sequence\r\n",
+        "data = df[['utrip_id','city_id']] \r\n",
+        "# data.head()\r\n",
+        "\r\n",
+        "seq_dict = {}\r\n",
+        "# Set default key \r\n",
+        "for idx,row in enumerate(data.iterrows()): \r\n",
+        "  # print(row[1][1]) #  [0],[1] access utrip_id, city_id \r\n",
+        "  if idx == 1000: break # NOTICE: avoid limit in colab\r\n",
+        "  seq_dict.setdefault(row[1][0],[]) \r\n",
+        "# print(seq_dict)  # Empty seq_dict wit [utrip_id] = empty_arr\r\n",
+        "# data to sequence  \r\n",
+        "# Ex: utrip_id : [city_id0,city_id1,...] \r\n",
+        "for idx,row in enumerate(data.iterrows()):  \r\n",
+        "  if idx == 1000: break  # NOTICE: avoid limit in colab \r\n",
+        "  # print(row[1][0],row[1][0])\r\n",
+        "  trip = row[1][0] \r\n",
+        "  city = row[1][1] \r\n",
+        "  seq_dict[trip].append(city)\r\n",
+        "\r\n",
+        "print(seq_dict)\r\n",
+        "print(\"Total sequences: \",len(seq_dict))"
+      ],
+      "execution_count": 6,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "{'1006220_1': [31114, 39641, 20232, 24144], '1010293_1': [5325, 55, 23921, 65322, 23921, 20545], '1012680_1': [37709, 11837, 19626, 62270], '1017326_1': [1979, 3531, 55529, 5860], '1024544_2': [50957, 60222, 23612, 17013, 46794], '103011_1': [12884, 40875, 66657, 33667], '1032262_2': [62185, 17568, 6701, 67371, 40565, 28053], '103327_1': [6196, 6196, 13621, 65679], '1047687_3': [67353, 14145, 11531, 57167, 29770], '1057628_1': [54603, 64960, 30458, 56590], '1062443_1': [47499, 47499, 10485, 11783, 56268, 41772], '106408_3': [64876, 55128, 9608, 47752, 17127], '106415_10': [36063, 36063, 36063, 36063, 36063, 36063, 36063], '1065561_1': [62185, 60153, 33204, 14843], '106648_1': [47378, 14827, 6788, 6788, 9879, 4660], '1072054_1': [29319, 29319, 48483, 48483, 23921, 29319, 29319, 29319], '1084117_1': [13861, 62135, 13861, 25025], '1097915_3': [39820, 52818, 15337, 60274, 4790], '1117862_1': [17013, 17013, 17013, 17013], '1118748_1': [49412, 58683, 51103, 66966], '1119028_2': [15215, 47759, 13260, 64155, 52933, 51685, 41932, 46411, 45399, 29747, 2577, 37747, 57975], '1166711_1': [50465, 18643, 21500, 53391], '1168613_5': [58819, 52101, 46293, 28829, 4345], '117451_1': [17822, 51135, 44103, 52450, 27906, 62711, 52450], '1174942_1': [20764, 59001, 15186, 12308], '1181318_2': [19771, 45682, 56872, 59598, 40871], '1182903_2': [35990, 2538, 35748, 45289], '1191830_1': [54458, 18845, 62720, 36875, 47482, 65679, 52308, 51103], '1214164_1': [20988, 31890, 43524, 36530, 61533, 15212], '1214761_2': [56402, 17775, 17775, 17775, 17775], '1223965_1': [53434, 66793, 31622, 23798], '1226850_1': [29319, 41009, 11457, 65322, 23921], '1228754_1': [3082, 3082, 3082, 47976], '1228787_1': [48274, 8005, 591, 39206], '123347_1': [47759, 41113, 19909, 49834, 46411, 41932, 22205, 52933, 27873, 37436], '1246451_3': [64269, 6196, 64876, 14459, 34260, 33400], '1271509_19': [23714, 30520, 23714, 37407], '1273741_1': [35811, 40648, 29220, 40648, 35811], '1282198_1': [5576, 61612, 28376, 65675, 67136, 14780], '1282998_1': [51408, 22690, 41023, 51408], '1286123_1': [42830, 66145, 16251, 43870, 43870, 60000, 19391], '1289671_1': [42428, 26962, 63418, 39737, 41891, 62184], '129609_1': [35096, 48788, 51746, 11115, 57658], '1307324_2': [65856, 47486, 47976, 28273], '1311136_1': [60237, 14361, 66533, 55529, 4202], '1315556_1': [17127, 31318, 46350, 9701], '1318264_11': [5085, 1034, 19425, 19425, 28902], '1321781_1': [47499, 62611, 10485, 11783], '1335169_1': [63977, 32620, 32620, 63977], '1335962_1': [42734, 3763, 66648, 51291], '1338795_1': [31890, 35997, 55284, 65202, 1940], '133917_7': [33397, 24660, 16062, 6104], '1341253_5': [51259, 51259, 56593, 56593], '13506_2': [7410, 57931, 13356, 2078], '1360116_1': [42359, 61320, 67102, 52571, 64761, 62868, 36836, 33641], '1361367_1': [41111, 5781, 44103, 44103], '1361778_1': [64077, 12382, 27189, 59713, 10612], '1362898_1': [61133, 47389, 63481, 22113], '136586_1': [23983, 63677, 40413, 41079], '1372532_1': [29319, 48483, 43641, 45378, 46522, 23921, 53042, 39878, 65322, 11457, 41009, 29319], '1377138_1': [29770, 30768, 45188, 55196, 29770], '1379669_5': [62611, 62611, 62611, 62611, 47499], '1379819_1': [13515, 47759, 56421, 64155, 37336, 41932, 46411, 11074, 47759, 47759, 36063, 36063, 44869], '1380470_1': [49818, 14684, 49818, 49818, 49818], '1380498_1': [55128, 7391, 8467, 25424, 64876], '1382965_1': [2416, 9227, 47193, 2416], '1385259_1': [31870, 14827, 16557, 40521], '1386048_2': [30520, 53399, 18417, 66648], '1396795_1': [29319, 23921, 66815, 29319], '1403254_1': [45065, 49715, 27695, 46854], '1434383_1': [56983, 14549, 1979, 56983], '1435940_1': [63650, 29738, 64905, 30520, 15231], '1438135_1': [51291, 31531, 61733, 4044, 61733, 62593, 55938, 25286, 24561], '1440293_2': [61727, 58823, 64876, 22490], '1445704_1': [30018, 19894, 36507, 41971, 39200, 13471, 37793], '1450445_1': [66648, 11869, 23714, 30520, 30520, 51291, 18417, 51291], '1450486_2': [735, 56872, 16362, 51999, 1910, 9278, 60143], '1468958_2': [63093, 52145, 3205, 1046], '147570_1': [66648, 18417, 20877, 30520, 39565], '1476126_1': [2538, 66648, 18417, 30520, 3505, 3763], '147869_2': [657, 12962, 58135, 53207, 10994, 51765], '1483215_1': [22490, 14254, 33077, 56916], '1483553_1': [32598, 22791, 47808, 65733, 11229, 29770], '1488886_2': [5429, 40794, 29319, 55, 37219, 5325, 48483], '1495499_1': [29943, 6090, 52848, 2588, 52848], '1499700_1': [29019, 29359, 67049, 58222, 38677, 38677], '1505696_2': [39820, 29770, 2201, 55196], '1508926_3': [42781, 1528, 56775, 12708, 6582], '1513383_1': [23714, 30520, 18417, 66648], '1518079_1': [62185, 16612, 59666, 62185], '1521840_1': [38772, 29199, 65635, 35623], '1539323_2': [9730, 66610, 65484, 29077], '1542592_1': [14549, 11783, 34478, 34478, 47499], '1549284_1': [4065, 21328, 12320, 29165, 32481, 12644, 59615, 8335], '1562321_1': [64876, 55128, 9608, 36063], '1568098_1': [27404, 27404, 27404, 27404, 27404], '1568355_1': [14729, 30016, 7859, 35959], '1570474_3': [24336, 48719, 23711, 27961, 39052, 34933, 36063, 22747, 25887], '1573721_1': [66648, 66648, 66648, 66648], '1573987_1': [43796, 65651, 12656, 60005], '1581971_2': [21999, 55218, 13530, 13530, 63812, 26235], '1584181_5': [52571, 67102, 5089, 66052], '1589473_2': [65734, 48488, 21076, 21076], '1589750_1': [40910, 67504, 2454, 37790, 48683, 37175], '1590392_2': [53363, 46258, 51849, 57988, 29770], '1601884_1': [14913, 30404, 17756, 28226], '1605151_1': [24783, 8587, 31627, 51090], '1643911_1': [3153, 15284, 52815, 48905, 33022, 52815], '1646385_2': [64324, 63786, 39850, 34123], '1649064_1': [8725, 10442, 37028, 41604, 50482, 51904], '1651323_1': [51746, 11115, 28194, 14046], '1652151_2': [48483, 54389, 55, 29319, 23921], '1653263_1': [66648, 30520, 14947, 61133, 66648], '1655753_1': [51076, 12308, 66841, 5308, 51135, 33682, 36905], '1663700_1': [7410, 44965, 56465, 7410], '1677659_3': [57658, 27343, 28154, 43601, 33667], '1687362_2': [55763, 9161, 61320, 52571, 22696, 6327, 48222, 41674, 63284, 20967, 55763], '1687667_2': [47499, 44109, 44109, 47486], '1689677_1': [16521, 16521, 63418, 53935, 16521], '1694355_2': [23921, 32859, 48483, 58655, 21276], '1703536_1': [25025, 25025, 9996, 28273], '1713175_1': [47759, 40710, 43618, 8928, 11074, 47759], '1718665_1': [382, 35060, 21402, 382], '1721204_1': [21510, 40521, 40521, 51182, 4504], '1733356_2': [21929, 55196, 55196, 21185], '1734190_1': [47759, 47759, 13260, 50457, 52933, 51685, 41932, 46411, 14705, 45399, 11074, 35160], '1739903_1': [39097, 39097, 28749, 39097, 39097], '1740944_6': [41620, 28154, 43601, 28154, 67353], '1745598_1': [29943, 7036, 49815, 8716, 2186, 6090, 29943], '1745631_1': [12445, 39993, 62195, 46767], '1752872_1': [47083, 66867, 35811, 40648], '1758493_1': [18820, 29319, 21560, 21987, 23921, 3914, 43641, 48483], '1764327_1': [8462, 31890, 66131, 31051], '1765434_2': [32644, 8565, 54642, 3505], '1772290_2': [28733, 39661, 10485, 56983, 3843], '1782913_1': [21766, 62618, 2122, 18548, 18548], '1787552_2': [31531, 39309, 7519, 54045, 54045], '1788252_2': [51128, 29690, 17707, 58741], '1793534_2': [41967, 56900, 64291, 9312, 4119], '1804037_1': [55128, 14827, 40521, 47378], '1804609_2': [58819, 33435, 63695, 22810, 42482, 20345], '1810369_1': [6025, 55413, 23015, 38445, 58518, 66077], '181426_1': [18508, 18508, 18508, 47759, 13260, 64155, 52933, 51685, 55990, 46411], '1818067_1': [23844, 23844, 23844, 23844], '1818514_1': [17127, 12426, 64876, 55128], '1821959_1': [46838, 17158, 62176, 57658], '1827908_1': [21929, 35686, 16521, 58741, 51128], '1834481_1': [5429, 41009, 21987, 47732], '1835578_1': [26235, 66107, 13150, 1703], '1849206_1': [25496, 25676, 51291, 3763, 3505, 24591, 23714, 21555, 26235, 26235, 21587, 36063], '1852455_1': [62185, 63357, 31830, 28048], '1856361_2': [64571, 15377, 17127, 12426], '1860327_2': [58178, 18508, 26277, 62328], '1861382_1': [10705, 42135, 20512, 63341, 44042, 53053, 48968, 8335], '1863591_2': [32693, 61487, 28907, 61299, 1230, 39040, 27404], '1876288_1': [10992, 40521, 55128, 9608, 15187, 17990, 49250], '1878298_1': [48483, 58945, 29386, 19697], '1878750_1': [48483, 12975, 29319, 21987, 38023], '188191_1': [3399, 34903, 34903, 41987, 42344, 17127], '1894760_1': [40521, 29712, 55128, 31870, 14827, 9613, 19903], '1898457_1': [64876, 17127, 18845, 1909], '1906147_1': [61187, 47752, 14827, 20791, 65183], '1906725_1': [44085, 60569, 66338, 66338], '1907063_1': [19444, 4639, 66783, 51797, 27680, 2214], '1913417_1': [48483, 18673, 23921, 18063, 65322, 21987, 28802, 21276, 33403, 5325, 48483], '1916310_3': [44343, 56568, 25025, 25025], '1917058_1': [45379, 11179, 15474, 65183], '1917119_1': [22490, 28829, 33540, 42482, 3074], '1917981_1': [18735, 18735, 43755, 43755], '191883_1': [49668, 17438, 67176, 39509, 49668], '1921680_1': [51291, 47238, 25676, 51291], '1926240_1': [36063, 15626, 37689, 17127, 43306, 35856], '1929746_1': [29319, 13046, 63977, 7961, 23921], '1929905_1': [23420, 57288, 12253, 56402, 16916, 59872, 64077], '1930668_1': [62185, 40565, 40381, 6971, 25469, 62185], '1934163_1': [12800, 24861, 57970, 12594], '1934608_2': [63219, 28311, 34853, 537], '1945072_1': [61678, 8335, 38677, 21328, 12320, 32481, 27485, 54296, 48968, 39850, 52356, 18311, 8335], '1950428_1': [38908, 2650, 23709, 60395, 5148], '195054_2': [56590, 54603, 35807, 64960], '1950592_3': [9860, 3712, 61733, 4364, 61733, 61733, 62593, 25286], '1958014_1': [51135, 59058, 61487, 48075, 16047, 27404, 27404, 5781, 62848, 40963, 40963, 63834], '1970200_1': [52722, 25040, 35156, 28968], '197052_2': [67169, 1046, 7549, 20514, 48503], '1972818_3': [38677, 21328, 8335, 27404], '1976994_3': [51997, 63650, 22841, 27115], '2000028_2': [44869, 16521]}\n",
+            "Total sequences:  187\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "MSZwx4RPRRUN"
+      },
+      "source": [
+        "## Embedding layer "
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "W9C0rz7iRikn"
+      },
+      "source": [
+        "# Embedding libraries \r\n",
+        "import io\r\n",
+        "import os\r\n",
+        "import re\r\n",
+        "import shutil\r\n",
+        "import string\r\n",
+        "import tensorflow as tf\r\n",
+        "\r\n",
+        "from tensorflow.keras import Model, Sequential\r\n",
+        "from tensorflow.keras.layers import Activation, Dense, Embedding, GlobalAveragePooling1D\r\n",
+        "from tensorflow.keras.layers.experimental.preprocessing import TextVectorization"
+      ],
+      "execution_count": 7,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "ZQCYYifxRplR",
+        "outputId": "86c81883-b16b-4bd3-dda1-2b7d6b80a539",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        }
+      },
+      "source": [
+        "# Treating every city_id is a word, split into 10 dimension \r\n",
+        "embedding_layer = tf.keras.layers.Embedding(40000,10)\r\n",
+        "print(embedding_layer)"
+      ],
+      "execution_count": 10,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "<tensorflow.python.keras.layers.embeddings.Embedding object at 0x7f6f2f31f358>\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "1EFrm0rVbtP9"
+      },
+      "source": [
+        ""
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "DUolownzRVL8"
+      },
+      "source": [
+        "# Iterate through dictionary\r\n",
+        "\r\n",
+        "for key in seq_dict: \r\n",
+        "  result = embedding_layer\r\n"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "KYLygLaBL1S9"
+      },
+      "source": [
+        "# Naive solution"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "zxWAEaraMDb1"
+      },
+      "source": [
+        "## Files & Libraries"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "orbwRdaXyxct",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "38e2120b-0677-4f0f-bb0c-04a794ab077f"
+      },
+      "source": [
+        "import pandas as pd "
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "fatal: not a git repository (or any of the parent directories): .git\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "eMihp8DAL-Bh"
+      },
+      "source": [
+        "folder_path = './drive/MyDrive/UIT-TSP/Booking.com Data Challenge'\r\n",
+        "data_path = \"/content/drive/MyDrive/UIT-TSP/Booking.com Data Challenge/booking_train_set.csv\""
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "SiRFM5WaL_Gx"
+      },
+      "source": [
+        "df = pd.read_csv(data_path)\r\n",
+        "df.head()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "_xj9wOtTMR4j"
+      },
+      "source": [
+        "## Solution description: \r\n",
+        "\r\n",
+        "Input: `list_city_id` = `[city_id0, city_id1,...,city_idN]`\r\n",
+        "\r\n",
+        "Output: next 4 recommended cities next_city_id = `[city_idA,city_idB,city_idC,city_idD]`\r\n",
+        "\r\n",
+        "\r\n",
+        "\r\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "auebgPOUMHrX"
+      },
+      "source": [
+        "## Transfer dataset \r\n",
+        "`utrip_id0` = `[city_id0,  city_id1, city_id2,...]`  \r\n",
+        "`utrip_id1` = `[city_id0,  city_id1, city_id2,...]`  \r\n",
+        "`utrip_id2` = `[city_id0,  city_id1, city_id2,...]`\r\n",
+        "\r\n",
+        "`...`   \r\n",
+        "\r\n",
+        "`utrip_idN` = `[city_id0,  city_id1, city_id2,...]`\r\n",
+        "\r\n",
+        "**NOTICE**: city_id0,city_id1 is just an example\r\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "eUHErIFVMCIx"
+      },
+      "source": [
+        ""
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "MlIXlh_-M6x7"
+      },
+      "source": [
+        "## Count cities and then ranked based on given sequence [city_id0,city_id1,...]\r\n",
+        "\r\n",
+        "###Example:  \r\n",
+        "Input sequence  [A,B] \r\n",
+        "\r\n",
+        "Database \r\n",
+        "- [A,B,C]\r\n",
+        "- [A,B]\r\n",
+        "- [A,D,E,F] \r\n",
+        "\r\n",
+        "Recommend next list [C,E,F] **(this list is not ranked yet)**\r\n",
+        "Must perform ranking before return the list\r\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "lC3Yf9jgNRoE"
+      },
+      "source": [
+        ""
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "xpoHpAhJNSJD"
+      },
+      "source": [
+        "# Frequency Table\r\n",
+        "\r\n",
+        "This might be helpful\r\n",
+        "https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.asfreq.html\r\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "d0DTnyfMmD6x",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 317
+        },
+        "outputId": "168fd176-12a6-4df3-a8d9-245d192dcf56"
+      },
+      "source": [
+        "df.head()"
+      ],
+      "execution_count": 5,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/html": [
+              "<div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>Unnamed: 0</th>\n",
+              "      <th>user_id</th>\n",
+              "      <th>checkin</th>\n",
+              "      <th>checkout</th>\n",
+              "      <th>city_id</th>\n",
+              "      <th>device_class</th>\n",
+              "      <th>affiliate_id</th>\n",
+              "      <th>booker_country</th>\n",
+              "      <th>hotel_country</th>\n",
+              "      <th>utrip_id</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>0</td>\n",
+              "      <td>1006220</td>\n",
+              "      <td>2016-04-09</td>\n",
+              "      <td>2016-04-11</td>\n",
+              "      <td>31114</td>\n",
+              "      <td>desktop</td>\n",
+              "      <td>384</td>\n",
+              "      <td>Gondal</td>\n",
+              "      <td>Gondal</td>\n",
+              "      <td>1006220_1</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>1</td>\n",
+              "      <td>1006220</td>\n",
+              "      <td>2016-04-11</td>\n",
+              "      <td>2016-04-12</td>\n",
+              "      <td>39641</td>\n",
+              "      <td>desktop</td>\n",
+              "      <td>384</td>\n",
+              "      <td>Gondal</td>\n",
+              "      <td>Gondal</td>\n",
+              "      <td>1006220_1</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>2</td>\n",
+              "      <td>1006220</td>\n",
+              "      <td>2016-04-12</td>\n",
+              "      <td>2016-04-16</td>\n",
+              "      <td>20232</td>\n",
+              "      <td>desktop</td>\n",
+              "      <td>384</td>\n",
+              "      <td>Gondal</td>\n",
+              "      <td>Glubbdubdrib</td>\n",
+              "      <td>1006220_1</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>3</th>\n",
+              "      <td>3</td>\n",
+              "      <td>1006220</td>\n",
+              "      <td>2016-04-16</td>\n",
+              "      <td>2016-04-17</td>\n",
+              "      <td>24144</td>\n",
+              "      <td>desktop</td>\n",
+              "      <td>384</td>\n",
+              "      <td>Gondal</td>\n",
+              "      <td>Gondal</td>\n",
+              "      <td>1006220_1</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>4</th>\n",
+              "      <td>4</td>\n",
+              "      <td>1010293</td>\n",
+              "      <td>2016-07-09</td>\n",
+              "      <td>2016-07-10</td>\n",
+              "      <td>5325</td>\n",
+              "      <td>mobile</td>\n",
+              "      <td>359</td>\n",
+              "      <td>The Devilfire Empire</td>\n",
+              "      <td>Cobra Island</td>\n",
+              "      <td>1010293_1</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div>"
+            ],
+            "text/plain": [
+              "   Unnamed: 0  user_id  ... hotel_country   utrip_id\n",
+              "0           0  1006220  ...        Gondal  1006220_1\n",
+              "1           1  1006220  ...        Gondal  1006220_1\n",
+              "2           2  1006220  ...  Glubbdubdrib  1006220_1\n",
+              "3           3  1006220  ...        Gondal  1006220_1\n",
+              "4           4  1010293  ...  Cobra Island  1010293_1\n",
+              "\n",
+              "[5 rows x 10 columns]"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 5
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "9_hlrMjNAr0U"
+      },
+      "source": [
+        "## Generate Sequence"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "46eN44bYrfZU",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "fd64b018-9320-4515-a34b-7ded17e0b564"
+      },
+      "source": [
+        "# Create sequence\r\n",
+        "data = df[['utrip_id','city_id']] \r\n",
+        "# data.head()\r\n",
+        "\r\n",
+        "seq_dict = {}\r\n",
+        "# Set default key \r\n",
+        "for idx,row in enumerate(data.iterrows()): \r\n",
+        "  # print(row[1][1]) #  [0],[1] access utrip_id, city_id \r\n",
+        "  if idx == 1000: break # avoid limit in colab\r\n",
+        "  seq_dict.setdefault(row[1][0],[]) \r\n",
+        "# print(seq_dict)  # Empty seq_dict wit [utrip_id] = empty_arr\r\n",
+        "# data to sequence  \r\n",
+        "# Ex: utrip_id : [city_id0,city_id1,...] \r\n",
+        "for idx,row in enumerate(data.iterrows()):  \r\n",
+        "  if idx == 1000: break  # avoid limit in colab\r\n",
+        "  # print(row[1][0],row[1][0])\r\n",
+        "  trip = row[1][0] \r\n",
+        "  city = row[1][1] \r\n",
+        "  seq_dict[trip].append(city)\r\n",
+        "\r\n",
+        "# print(seq_dict)\r\n",
+        "# print(\"Total sequences: \",len(seq_dict))"
+      ],
+      "execution_count": 13,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "{'1006220_1': [31114, 39641, 20232, 24144], '1010293_1': [5325, 55, 23921, 65322, 23921, 20545], '1012680_1': [37709, 11837, 19626, 62270], '1017326_1': [1979, 3531, 55529, 5860], '1024544_2': [50957, 60222, 23612, 17013, 46794], '103011_1': [12884, 40875, 66657, 33667], '1032262_2': [62185, 17568, 6701, 67371, 40565, 28053], '103327_1': [6196, 6196, 13621, 65679], '1047687_3': [67353, 14145, 11531, 57167, 29770], '1057628_1': [54603, 64960, 30458, 56590], '1062443_1': [47499, 47499, 10485, 11783, 56268, 41772], '106408_3': [64876, 55128, 9608, 47752, 17127], '106415_10': [36063, 36063, 36063, 36063, 36063, 36063, 36063], '1065561_1': [62185, 60153, 33204, 14843], '106648_1': [47378, 14827, 6788, 6788, 9879, 4660], '1072054_1': [29319, 29319, 48483, 48483, 23921, 29319, 29319, 29319], '1084117_1': [13861, 62135, 13861, 25025], '1097915_3': [39820, 52818, 15337, 60274, 4790], '1117862_1': [17013, 17013, 17013, 17013], '1118748_1': [49412, 58683, 51103, 66966], '1119028_2': [15215, 47759, 13260, 64155, 52933, 51685, 41932, 46411, 45399, 29747, 2577, 37747, 57975], '1166711_1': [50465, 18643, 21500, 53391], '1168613_5': [58819, 52101, 46293, 28829, 4345], '117451_1': [17822, 51135, 44103, 52450, 27906, 62711, 52450], '1174942_1': [20764, 59001, 15186, 12308], '1181318_2': [19771, 45682, 56872, 59598, 40871], '1182903_2': [35990, 2538, 35748, 45289], '1191830_1': [54458, 18845, 62720, 36875, 47482, 65679, 52308, 51103], '1214164_1': [20988, 31890, 43524, 36530, 61533, 15212], '1214761_2': [56402, 17775, 17775, 17775, 17775], '1223965_1': [53434, 66793, 31622, 23798], '1226850_1': [29319, 41009, 11457, 65322, 23921], '1228754_1': [3082, 3082, 3082, 47976], '1228787_1': [48274, 8005, 591, 39206], '123347_1': [47759, 41113, 19909, 49834, 46411, 41932, 22205, 52933, 27873, 37436], '1246451_3': [64269, 6196, 64876, 14459, 34260, 33400], '1271509_19': [23714, 30520, 23714, 37407], '1273741_1': [35811, 40648, 29220, 40648, 35811], '1282198_1': [5576, 61612, 28376, 65675, 67136, 14780], '1282998_1': [51408, 22690, 41023, 51408], '1286123_1': [42830, 66145, 16251, 43870, 43870, 60000, 19391], '1289671_1': [42428, 26962, 63418, 39737, 41891, 62184], '129609_1': [35096, 48788, 51746, 11115, 57658], '1307324_2': [65856, 47486, 47976, 28273], '1311136_1': [60237, 14361, 66533, 55529, 4202], '1315556_1': [17127, 31318, 46350, 9701], '1318264_11': [5085, 1034, 19425, 19425, 28902], '1321781_1': [47499, 62611, 10485, 11783], '1335169_1': [63977, 32620, 32620, 63977], '1335962_1': [42734, 3763, 66648, 51291], '1338795_1': [31890, 35997, 55284, 65202, 1940], '133917_7': [33397, 24660, 16062, 6104], '1341253_5': [51259, 51259, 56593, 56593], '13506_2': [7410, 57931, 13356, 2078], '1360116_1': [42359, 61320, 67102, 52571, 64761, 62868, 36836, 33641], '1361367_1': [41111, 5781, 44103, 44103], '1361778_1': [64077, 12382, 27189, 59713, 10612], '1362898_1': [61133, 47389, 63481, 22113], '136586_1': [23983, 63677, 40413, 41079], '1372532_1': [29319, 48483, 43641, 45378, 46522, 23921, 53042, 39878, 65322, 11457, 41009, 29319], '1377138_1': [29770, 30768, 45188, 55196, 29770], '1379669_5': [62611, 62611, 62611, 62611, 47499], '1379819_1': [13515, 47759, 56421, 64155, 37336, 41932, 46411, 11074, 47759, 47759, 36063, 36063, 44869], '1380470_1': [49818, 14684, 49818, 49818, 49818], '1380498_1': [55128, 7391, 8467, 25424, 64876], '1382965_1': [2416, 9227, 47193, 2416], '1385259_1': [31870, 14827, 16557, 40521], '1386048_2': [30520, 53399, 18417, 66648], '1396795_1': [29319, 23921, 66815, 29319], '1403254_1': [45065, 49715, 27695, 46854], '1434383_1': [56983, 14549, 1979, 56983], '1435940_1': [63650, 29738, 64905, 30520, 15231], '1438135_1': [51291, 31531, 61733, 4044, 61733, 62593, 55938, 25286, 24561], '1440293_2': [61727, 58823, 64876, 22490], '1445704_1': [30018, 19894, 36507, 41971, 39200, 13471, 37793], '1450445_1': [66648, 11869, 23714, 30520, 30520, 51291, 18417, 51291], '1450486_2': [735, 56872, 16362, 51999, 1910, 9278, 60143], '1468958_2': [63093, 52145, 3205, 1046], '147570_1': [66648, 18417, 20877, 30520, 39565], '1476126_1': [2538, 66648, 18417, 30520, 3505, 3763], '147869_2': [657, 12962, 58135, 53207, 10994, 51765], '1483215_1': [22490, 14254, 33077, 56916], '1483553_1': [32598, 22791, 47808, 65733, 11229, 29770], '1488886_2': [5429, 40794, 29319, 55, 37219, 5325, 48483], '1495499_1': [29943, 6090, 52848, 2588, 52848], '1499700_1': [29019, 29359, 67049, 58222, 38677, 38677], '1505696_2': [39820, 29770, 2201, 55196], '1508926_3': [42781, 1528, 56775, 12708, 6582], '1513383_1': [23714, 30520, 18417, 66648], '1518079_1': [62185, 16612, 59666, 62185], '1521840_1': [38772, 29199, 65635, 35623], '1539323_2': [9730, 66610, 65484, 29077], '1542592_1': [14549, 11783, 34478, 34478, 47499], '1549284_1': [4065, 21328, 12320, 29165, 32481, 12644, 59615, 8335], '1562321_1': [64876, 55128, 9608, 36063], '1568098_1': [27404, 27404, 27404, 27404, 27404], '1568355_1': [14729, 30016, 7859, 35959], '1570474_3': [24336, 48719, 23711, 27961, 39052, 34933, 36063, 22747, 25887], '1573721_1': [66648, 66648, 66648, 66648], '1573987_1': [43796, 65651, 12656, 60005], '1581971_2': [21999, 55218, 13530, 13530, 63812, 26235], '1584181_5': [52571, 67102, 5089, 66052], '1589473_2': [65734, 48488, 21076, 21076], '1589750_1': [40910, 67504, 2454, 37790, 48683, 37175], '1590392_2': [53363, 46258, 51849, 57988, 29770], '1601884_1': [14913, 30404, 17756, 28226], '1605151_1': [24783, 8587, 31627, 51090], '1643911_1': [3153, 15284, 52815, 48905, 33022, 52815], '1646385_2': [64324, 63786, 39850, 34123], '1649064_1': [8725, 10442, 37028, 41604, 50482, 51904], '1651323_1': [51746, 11115, 28194, 14046], '1652151_2': [48483, 54389, 55, 29319, 23921], '1653263_1': [66648, 30520, 14947, 61133, 66648], '1655753_1': [51076, 12308, 66841, 5308, 51135, 33682, 36905], '1663700_1': [7410, 44965, 56465, 7410], '1677659_3': [57658, 27343, 28154, 43601, 33667], '1687362_2': [55763, 9161, 61320, 52571, 22696, 6327, 48222, 41674, 63284, 20967, 55763], '1687667_2': [47499, 44109, 44109, 47486], '1689677_1': [16521, 16521, 63418, 53935, 16521], '1694355_2': [23921, 32859, 48483, 58655, 21276], '1703536_1': [25025, 25025, 9996, 28273], '1713175_1': [47759, 40710, 43618, 8928, 11074, 47759], '1718665_1': [382, 35060, 21402, 382], '1721204_1': [21510, 40521, 40521, 51182, 4504], '1733356_2': [21929, 55196, 55196, 21185], '1734190_1': [47759, 47759, 13260, 50457, 52933, 51685, 41932, 46411, 14705, 45399, 11074, 35160], '1739903_1': [39097, 39097, 28749, 39097, 39097], '1740944_6': [41620, 28154, 43601, 28154, 67353], '1745598_1': [29943, 7036, 49815, 8716, 2186, 6090, 29943], '1745631_1': [12445, 39993, 62195, 46767], '1752872_1': [47083, 66867, 35811, 40648], '1758493_1': [18820, 29319, 21560, 21987, 23921, 3914, 43641, 48483], '1764327_1': [8462, 31890, 66131, 31051], '1765434_2': [32644, 8565, 54642, 3505], '1772290_2': [28733, 39661, 10485, 56983, 3843], '1782913_1': [21766, 62618, 2122, 18548, 18548], '1787552_2': [31531, 39309, 7519, 54045, 54045], '1788252_2': [51128, 29690, 17707, 58741], '1793534_2': [41967, 56900, 64291, 9312, 4119], '1804037_1': [55128, 14827, 40521, 47378], '1804609_2': [58819, 33435, 63695, 22810, 42482, 20345], '1810369_1': [6025, 55413, 23015, 38445, 58518, 66077], '181426_1': [18508, 18508, 18508, 47759, 13260, 64155, 52933, 51685, 55990, 46411], '1818067_1': [23844, 23844, 23844, 23844], '1818514_1': [17127, 12426, 64876, 55128], '1821959_1': [46838, 17158, 62176, 57658], '1827908_1': [21929, 35686, 16521, 58741, 51128], '1834481_1': [5429, 41009, 21987, 47732], '1835578_1': [26235, 66107, 13150, 1703], '1849206_1': [25496, 25676, 51291, 3763, 3505, 24591, 23714, 21555, 26235, 26235, 21587, 36063], '1852455_1': [62185, 63357, 31830, 28048], '1856361_2': [64571, 15377, 17127, 12426], '1860327_2': [58178, 18508, 26277, 62328], '1861382_1': [10705, 42135, 20512, 63341, 44042, 53053, 48968, 8335], '1863591_2': [32693, 61487, 28907, 61299, 1230, 39040, 27404], '1876288_1': [10992, 40521, 55128, 9608, 15187, 17990, 49250], '1878298_1': [48483, 58945, 29386, 19697], '1878750_1': [48483, 12975, 29319, 21987, 38023], '188191_1': [3399, 34903, 34903, 41987, 42344, 17127], '1894760_1': [40521, 29712, 55128, 31870, 14827, 9613, 19903], '1898457_1': [64876, 17127, 18845, 1909], '1906147_1': [61187, 47752, 14827, 20791, 65183], '1906725_1': [44085, 60569, 66338, 66338], '1907063_1': [19444, 4639, 66783, 51797, 27680, 2214], '1913417_1': [48483, 18673, 23921, 18063, 65322, 21987, 28802, 21276, 33403, 5325, 48483], '1916310_3': [44343, 56568, 25025, 25025], '1917058_1': [45379, 11179, 15474, 65183], '1917119_1': [22490, 28829, 33540, 42482, 3074], '1917981_1': [18735, 18735, 43755, 43755], '191883_1': [49668, 17438, 67176, 39509, 49668], '1921680_1': [51291, 47238, 25676, 51291], '1926240_1': [36063, 15626, 37689, 17127, 43306, 35856], '1929746_1': [29319, 13046, 63977, 7961, 23921], '1929905_1': [23420, 57288, 12253, 56402, 16916, 59872, 64077], '1930668_1': [62185, 40565, 40381, 6971, 25469, 62185], '1934163_1': [12800, 24861, 57970, 12594], '1934608_2': [63219, 28311, 34853, 537], '1945072_1': [61678, 8335, 38677, 21328, 12320, 32481, 27485, 54296, 48968, 39850, 52356, 18311, 8335], '1950428_1': [38908, 2650, 23709, 60395, 5148], '195054_2': [56590, 54603, 35807, 64960], '1950592_3': [9860, 3712, 61733, 4364, 61733, 61733, 62593, 25286], '1958014_1': [51135, 59058, 61487, 48075, 16047, 27404, 27404, 5781, 62848, 40963, 40963, 63834], '1970200_1': [52722, 25040, 35156, 28968], '197052_2': [67169, 1046, 7549, 20514, 48503], '1972818_3': [38677, 21328, 8335, 27404], '1976994_3': [51997, 63650, 22841, 27115], '2000028_2': [44869, 16521]}\n",
+            "Total sequences:  187\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "1ni0gTc2AusL"
+      },
+      "source": [
+        "## Generate Table"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "rn7xzh2_1kJO"
+      },
+      "source": [
+        "freq_dict = {}\r\n",
+        "for seq in seq_dict: \r\n",
+        "  # Generate id \r\n",
+        "  convert_to_str = lambda x : str(x)\r\n",
+        "  prefix = convert_to_str(seq_dict[seq][:-1])  \r\n",
+        "  # print(prefix) \r\n",
+        "\r\n",
+        "  # freq_dict[prefix]\r\n",
+        "\r\n",
+        "\r\n",
+        "  # prefix = '' \r\n",
+        "  # prefix = (str(id) for id in seq_dict['1006220_1'][:-1])  \r\n",
+        "\r\n"
+      ],
+      "execution_count": 14,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "_Oy0yreVoxWc"
+      },
+      "source": [
+        "freq_dict = {} \r\n",
+        "for idx in range(100):  \r\n",
+        "  current_row[:-1] \r\n",
+        "  # prefix = city_data[:-1] \r\n",
+        "  freq_dict[prefix][]\r\n",
+        "  # print(prefix) \r\n"
+      ],
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
